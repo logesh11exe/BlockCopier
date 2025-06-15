@@ -33,5 +33,7 @@
 
 #Ignore
 Release/
+x64/
 .vs/
 FileBackup/Release/
+FileBackup/x64/Release/

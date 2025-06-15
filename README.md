@@ -1,54 +1,196 @@
-# BlockCopier
+# 📦 FileBackup
 
-BlockCopier is a high-performance Windows command-line tool for copying the contents of a VSS (Volume Shadow Copy Service) snapshot or raw disk/volume to an empty disk or partition. It is designed for robust, parallel, block-level copying, making it suitable for backup, disk imaging, or forensic purposes.
+A high-performance file backup utility that supports asynchronous I/O operations and parallel processing for efficient file copying.
 
-## Features
-- Copies data from a source (VSS snapshot, raw disk, or file) to a target disk or partition at the block level
-- Uses asynchronous, parallel I/O for high performance
-- Supports configurable block size and number of parallel threads
-- Handles direct I/O with proper buffer alignment
-- Verifies destination size and sector alignment to prevent data loss
-- Written in modern C++ for Windows
+## ✨ Features
 
-## Requirements
-- Windows 10 or later
-- Administrator privileges (required for raw disk access)
-- Visual Studio 2022 (or compatible) for building from source
-- Install Microsoft Visual C++ 2015-2022 Redistributable(x86/x64)
+- 🔄 Asynchronous I/O operations using Windows Asynchronous Procedure Calls (APCs)
+- ⚡ Parallel processing with configurable number of worker threads
+- 📂 Support for large files and volumes
+- 📊 Progress tracking and detailed logging
+- 🔧 Sector-aligned I/O for optimal performance
+- 💾 Memory-efficient buffer management
+- 🛡️ Error handling and recovery mechanisms
 
-## Building
-1. Open `FileBackup.sln` in Visual Studio.
-2. Select the desired configuration (Debug/Release, x64/x86).
-3. Build the solution (Ctrl+Shift+B).
-4. The executable will be located in `FileBackup/Release/` or `FileBackup/Debug/` depending on the configuration.
+## 🖥️ System Requirements
 
-## Usage
-Run the tool from an elevated command prompt (Run as Administrator):
+### Development Environment
+- 🪟 Windows 10 or later (Tested on Windows 10 64-bit)
+- 🛠️ Visual Studio 2019 or later (Tested with Visual Studio 2019 Professional)
+- 📦 Windows SDK 10.0.19041.0 or later
+- ⚙️ C++17 or later
+
+### Runtime Requirements
+- 🪟 Windows 10 or later (64-bit)
+- 🔑 Administrator privileges (for volume operations)
+- 💻 Minimum 4GB RAM (8GB recommended)
+- 💾 Sufficient disk space for source and destination
+
+## 📚 Build Dependencies
+
+### Required Libraries
+- 🪟 Windows API (included in Windows SDK)
+- 📚 Standard C++ Library
+- 🔧 Microsoft Visual C++ Runtime
+
+## 🏗️ Building the Project
+
+### Using Visual Studio
+
+1. Clone the repository:
+```bash
+git clone https://github.com/logesh11exe/BlockCopier.git
+cd FileBackup
+```
+
+2. Open the solution in Visual Studio:
+```bash
+FileBackup.sln
+```
+
+3. Configure the build:
+   - Select "Release" configuration
+   - Select "x64" platform for x64 build and "x86" for x86 Build
+   - Ensure Windows SDK version matches your system
+
+4. Build the solution:
+   - Press F7 or select Build > Build Solution
+   - Alternatively, use the command line:
+	 - For x64
+     ```bash
+     msbuild FileBackup.sln /p:Configuration=Release /p:Platform=x64
+     ```
+	 - For x86
+     ```bash
+     msbuild FileBackup.sln /p:Configuration=Release /p:Platform=x86
+     ```
+
+## 📥 Installation
+
+1. Build the project using the method above
+
+2. The executable will be located at:
+  - For x64 Build
+   ```
+   x64/Release/FileBackup.exe
+   ```
+   
+  - For x86 Build
+   ```
+   Release/FileBackup.exe
+   ```
+
+3. Copy the executable to your desired location
+
+## 🧪 Testing
+
+### Manual Testing
+
+1. 📸 SnapShot to Empty Removable Drive Copy Test:
+```bash
+FileBackup.exe \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy8 \\.\F: 20 2
+```
+> **Note:** 
+> - You should provide the path of an existing snapshot as the first parameter
+> - Should provide the logical drive letter path to an External Removable Drive as second parameter
+> - Number of threads as third parameter
+> - Block size in MB as fourth parameter
+
+2. 💽 Snapshot to Empty HardDisk:
+```bash
+FileBackup.exe \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy8 \\.\PHYSICALDRIVE1 20 2
+```
+> **Note:** The only change here is to provide the DeviceObject's path as the destination path for a hard disk (since it's a block copy to a raw harddrive)
+
+3. ⚙️ Default Parameters:
+```bash
+FileBackup.exe \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy8 \\.\PHYSICALDRIVE1 --usedefault
+```
+> **Note:** Here `--usedefault` param uses 4 threads and 1MB as default values and proceeds to copy.
+
+### Validation Steps
+
+1. ✅ File Integrity Check:
+   - Compare source and destination file sizes
+   
+   **Verify File Integrity (Size Comparison)**
+   This is the quickest initial check. If sizes don't match, the content definitely won't.
+
+   ```bash
+   # Get Source File Size
+   dir "E:\"
+   # Note: Before taking the snapshot you might have known the exact source path. 
+   # Kindly provide that exact path here
+
+   # Get Destination File Size
+   dir "F:\"
+   # Note: After copying it to a disk. Provide that path as the path.
+   ```
+
+   **Expected Result:** The byte counts for both files should be identical.
+   > ⚠️ If sizes differ: The copy operation failed to create an exact duplicate. The file integrity check has failed.
+
+2. 📊 Performance Validation:
+   - Monitor CPU usage (should be balanced across threads)
+   - Check memory usage (should be stable)
+   - Verify I/O throughput
+
+3. 🚨 Error Handling Test:
+   - Test with non-existent source
+   - Test with insufficient permissions
+
+## 📁 Project Structure
 
 ```
-FileBackup.exe <sourcePath> <targetPartitionPath> [threads] [blockSizeMB]
+FileBackup/
+├── include/
+│   ├── BlockCopier.h    # Main file copy logic and thread management
+│   ├── DiskUtils.h      # Disk and volume information utilities
+│   ├── IOUtils.h        # Asynchronous I/O operations
+│   └── LogUtils.h       # Logging system
+├── src/
+│   ├── BlockCopier.cpp  # Implementation of file copy logic
+│   ├── DiskUtils.cpp    # Disk utilities implementation
+│   ├── IOUtils.cpp      # I/O operations implementation
+│   ├── LogUtils.cpp     # Logging system implementation
+│   └── main.cpp         # Application entry point
 ```
 
-- `<sourcePath>`: Path to the source VSS snapshot, raw disk, or file (e.g., `\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopyX`)
-- `<targetPartitionPath>`: Path to the target disk or partition (e.g., `\\.\PhysicalDriveX`)
-- `[threads]`: (Optional) Number of parallel I/O threads (default: 8, max: 64)
-- `[blockSizeMB]`: (Optional) Block size in megabytes (default: 1)
+## ⚙️ Configuration Options
 
-**Example:**
-```
-FileBackup.exe "\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1" "\\.\PhysicalDrive2" 8 4
-```
-This copies from the specified VSS snapshot to the target physical drive using 8 threads and 4MB blocks.
+- `DEFAULT_BLOCK_SIZE_MB`: Default block size for I/O operations (default: 1MB)
+- `DEFAULT_MAX_OUTSTANDING_IO`: Maximum number of concurrent I/O operations (default: 4)
 
-## Notes & Warnings
-- **Data Loss Warning:** The target disk/partition will be overwritten. Ensure you specify the correct target!
-- **Permissions:** You must run as Administrator to access raw disks and VSS snapshots.
-- **Destination Size:** The tool checks that the destination is at least as large as the source. Copying will abort if not.
-- **Alignment:** Block size must be a multiple of the destination's physical sector size (usually 4096 bytes).
-- **No Buffering:** Uses direct I/O for performance; buffers are page-aligned.
+## 🔧 Troubleshooting
 
+### Common Build Issues
 
+1. 🚫 Windows SDK Version Mismatch:
+   - Error: "Windows SDK version not found"
+   - Solution: Install the correct Windows SDK version or update project settings
 
----
+2. 🚫 Missing Dependencies:
+   - Error: "Cannot open include file"
+   - Solution: Ensure all required libraries are installed
 
-For questions or contributions, please open an issue or pull request.
+### Runtime Issues
+
+1. 🚫 Access Denied:
+   - Error: "Access is denied"
+   - Solution: Run as administrator
+
+2. 🚫 Insufficient Memory:
+   - Error: "Not enough memory"
+   - Solution: Format the target disk.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## 💬 Support
+
+For issues and feature requests, please use the GitHub issue tracker. 
