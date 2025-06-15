@@ -11,6 +11,8 @@ A high-performance file backup utility that supports asynchronous I/O operations
 - 🔧 Sector-aligned I/O for optimal performance
 - 💾 Memory-efficient buffer management
 - 🛡️ Error handling and recovery mechanisms
+- 🔄 Block-level copying for efficient volume backups
+- 📦 Support for both file and raw device copying
 
 ## 🖥️ System Requirements
 
@@ -23,7 +25,6 @@ A high-performance file backup utility that supports asynchronous I/O operations
 ### Runtime Requirements
 - 🪟 Windows 10 or later (64-bit)
 - 🔑 Administrator privileges (for volume operations)
-- 💻 Minimum 4GB RAM (8GB recommended)
 - 💾 Sufficient disk space for source and destination
 
 ## 📚 Build Dependencies
@@ -193,4 +194,49 @@ FileBackup/
 
 ## 💬 Support
 
-For issues and feature requests, please use the GitHub issue tracker. 
+For issues and feature requests, please use the GitHub issue tracker.
+
+## 🔄 Block Copy Operations
+
+### What is Block Copy?
+Block copy is a low-level copying mechanism that operates at the disk sector level, bypassing the file system. This approach offers several advantages:
+
+- 🚀 **Performance**: Direct sector access for faster copying
+- 💾 **Efficiency**: No file system overhead
+- 🔒 **Reliability**: Sector-by-sector verification possible
+- 📦 **Completeness**: Captures all data, including hidden files and system files
+
+### Supported Block Copy Operations
+
+1. 📸 **Volume Snapshot to Removable Drive**
+   - Copies entire volume contents
+   - Preserves partition structure
+   - Supports sector-by-sector verification
+   ```bash
+   FileBackup.exe \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy8 \\.\F: 20 2
+   ```
+
+2. 💽 **Volume Snapshot to Raw Disk**
+   - Direct disk-to-disk copying
+   - Preserves all disk structures
+   - Ideal for system backups
+   ```bash
+   FileBackup.exe \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy8 \\.\PHYSICALDRIVE1 20 2
+   ```
+
+### Block Copy Parameters
+
+- **Thread Count**: Number of parallel copy operations (default: 4)
+- **Block Size**: Size of each copy operation in MB (default: 1MB)
+
+### Best Practices
+
+1. 🎯 **Block Size Selection**
+   - Larger blocks (20MB+) for sequential access
+   - Smaller blocks (1-4MB) for random access
+   - Consider available memory when choosing block size
+
+2. ⚡ **Thread Count Optimization**
+   - Match thread count to available CPU cores
+   - Consider I/O subsystem capabilities
+   - Balance between CPU and I/O bottlenecks
